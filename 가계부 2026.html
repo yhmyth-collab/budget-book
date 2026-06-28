@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 월 가계부</title>
+<style>
+  :root {
+    --green-dark:  #2D6A4F;
+    --green-mid:   #40916C;
+    --green-light: #74C69D;
+    --green-pale:  #D8F3DC;
+    --green-bg:    #F0FFF4;
+    --coral:       #E76F51;
+    --coral-pale:  #FFF3EF;
+    --yellow-pale: #FFFDE7;
+    --gray-light:  #F9FAFB;
+    --gray-border: #E2E8F0;
+    --text-main:   #1A202C;
+    --text-sub:    #718096;
+    --red:         #E53E3E;
+    --blue-input:  #000066;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
+    background: #EEF2F7;
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* ── 상단 탭 ── */
+  .tabs {
+    display: flex; gap: 4px;
+    max-width: 900px; margin: 0 auto 0;
+  }
+  .tab-btn {
+    padding: 10px 24px;
+    border: none; border-radius: 10px 10px 0 0;
+    background: #CBD5E0; color: #555;
+    font: 700 14px '맑은 고딕', sans-serif;
+    cursor: pointer; transition: all .2s;
+  }
+  .tab-btn.active { background: var(--green-dark); color: #fff; }
+
+  /* ── 메인 카드 ── */
+  .container {
+    max-width: 900px; margin: 0 auto;
+    background: #fff; border-radius: 0 12px 12px 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.10);
+    overflow: hidden;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── 페이지 헤더 ── */
+  .page-header {
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    color: #fff; padding: 24px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .page-header h1 { font-size: 22px; }
+  .page-header small { font-size: 12px; opacity: .75; }
+
+  .month-selector {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .month-selector select, .month-selector input {
+    background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.4);
+    border-radius: 8px; color: #fff;
+    padding: 6px 12px; font: 700 15px '맑은 고딕', sans-serif;
+  }
+  .month-selector select option { color: #333; background: #fff; }
+
+  /* ── 섹션 ── */
+  .section { padding: 20px 28px; }
+  .section-title {
+    font-size: 14px; font-weight: 700;
+    color: #fff; background: var(--green-dark);
+    padding: 8px 14px; border-radius: 8px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .section-title.coral { background: var(--coral); }
+  .section-title.mid   { background: var(--green-mid); }
+
+  /* ── 입력 그리드 ── */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr 120px 90px 100px;
+    gap: 4px;
+    font-size: 13px;
+  }
+  .input-grid .col-hdr {
+    background: var(--green-pale); color: var(--green-dark);
+    font-weight: 700; padding: 6px 8px;
+    border-radius: 6px; text-align: center;
+  }
+  .input-grid .cat {
+    background: #E8F5E9; color: #555;
+    text-align: center; padding: 5px 4px;
+    border-radius: 6px; font-size: 11px; font-weight: 600;
+  }
+  .input-grid .label {
+    background: var(--gray-light);
+    padding: 5px 10px; border-radius: 6px;
+    color: var(--text-main);
+  }
+  input[type="number"], input[type="text"] {
+    width: 100%; border: 1.5px solid var(--gray-border);
+    border-radius: 6px; padding: 5px 8px;
+    font: 13px '맑은 고딕', sans-serif; color: var(--blue-input);
+    text-align: right; transition: border-color .2s;
+    background: var(--green-bg);
+  }
+  input[type="number"]:focus, input[type="text"]:focus {
+    outline: none; border-color: var(--green-mid);
+    box-shadow: 0 0 0 2px rgba(64,145,108,.15);
+  }
+  input.date-in { text-align: center; background: #FAFFFE; color: #555; }
+  input.bank-in { text-align: center; background: #FAFFFE; color: #555; font-size: 11px; }
+
+  /* ── 소계 행 ── */
+  .subtotal-row {
+    grid-column: 1/-1;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--green-dark); color: #fff;
+    padding: 8px 14px; border-radius: 8px;
+    margin: 6px 0;
+  }
+  .subtotal-row span { font-size: 13px; }
+  .subtotal-row strong { font-size: 15px; }
+
+  .subtotal-row.coral { background: var(--coral); }
+  .subtotal-row.mid   { background: var(--green-mid); }
+
+  /* ── 수입 입력 ── */
+  .income-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .income-item { display: flex; flex-direction: column; gap: 4px; }
+  .income-item label { font-size: 12px; color: var(--text-sub); font-weight: 600; }
+
+  /* ── 요약 박스 ── */
+  .summary-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px; margin-top: 6px;
+  }
+  .summary-card {
+    border-radius: 10px; padding: 14px 16px;
+    text-align: center;
+  }
+  .summary-card .s-label { font-size: 11px; color: #666; margin-bottom: 4px; }
+  .summary-card .s-value { font-size: 18px; font-weight: 700; }
+  .sc-income  { background: var(--green-pale); }
+  .sc-income .s-value  { color: var(--green-dark); }
+  .sc-expense { background: #FFE5E5; }
+  .sc-expense .s-value { color: var(--red); }
+  .sc-balance { background: var(--green-pale); }
+  .sc-balance .s-value { color: var(--green-dark); }
+  .sc-balance.negative { background: #FFE5E5; }
+  .sc-balance.negative .s-value { color: var(--red); }
+
+  .compare-badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+    margin-top: 4px;
+  }
+  .up   { background: #FFE5E5; color: var(--red); }
+  .down { background: var(--green-pale); color: var(--green-dark); }
+  .same { background: #EEF2F7; color: #888; }
+
+  /* ── 25일 이체 목록 ── */
+  .task-grid {
+    display: grid; grid-template-columns: 1fr 140px 1fr;
+    gap: 6px; font-size: 13px; margin-top: 6px;
+  }
+  .task-grid .t-hdr {
+    background: var(--coral); color: #fff;
+    padding: 6px 10px; border-radius: 6px;
+    font-weight: 700; text-align: center;
+  }
+  .task-grid .t-label {
+    background: var(--yellow-pale); color: var(--text-main);
+    padding: 5px 10px; border-radius: 6px;
+  }
+  .task-grid input {
+    background: #FFFDE7;
+  }
+  .task-grid .t-memo {
+    background: var(--gray-light); color: #888;
+    padding: 5px 10px; border-radius: 6px; font-size: 11px;
+  }
+  .task-total {
+    background: var(--coral); color: #fff;
+    padding: 9px 14px; border-radius: 8px;
+    display: flex; justify-content: space-between;
+    margin-top: 8px; font-weight: 700;
+  }
+
+  /* ── 버튼 ── */
+  .btn-row { display: flex; gap: 10px; padding: 16px 28px; }
+  .btn {
+    flex: 1; padding: 12px;
+    border: none; border-radius: 10px;
+    font: 700 14px '맑은 고딕', sans-serif; cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-save   { background: var(--green-dark); color: #fff; }
+  .btn-save:hover   { background: var(--green-mid); }
+  .btn-clear  { background: #EEF2F7; color: #555; }
+  .btn-print  { background: var(--coral); color: #fff; }
+  .btn-print:hover  { opacity: .85; }
+
+  /* ── 메모 ── */
+  textarea {
+    width: 100%; border: 1.5px solid var(--gray-border);
+    border-radius: 8px; padding: 10px; resize: vertical; min-height: 80px;
+    font: 13px '맑은 고딕', sans-serif; background: var(--gray-light);
+  }
+  textarea:focus { outline: none; border-color: var(--green-mid); }
+
+  /* ── 연간현황 탭 ── */
+  .annual-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .annual-table th {
+    background: var(--green-dark); color: #fff;
+    padding: 8px 6px; text-align: center; border: 1px solid #fff;
+  }
+  .annual-table td {
+    padding: 7px 8px; border: 1px solid var(--gray-border);
+    text-align: right;
+  }
+  .annual-table tr:nth-child(even) td { background: var(--gray-light); }
+  .annual-table .row-label {
+    text-align: center; font-weight: 700;
+    background: var(--green-pale); color: var(--green-dark);
+  }
+  .annual-table .total-col {
+    background: var(--green-dark); color: #fff; font-weight: 700;
+  }
+  .annual-table .balance-row td { color: var(--green-dark); font-weight: 700; }
+  .annual-table .balance-row td.negative { color: var(--red); }
+
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--green-dark); color: #fff;
+    padding: 10px 24px; border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+    z-index: 9999;
+  }
+  .toast.show { opacity: 1; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .tabs, .btn-row, .tab-btn { display: none; }
+    .container { box-shadow: none; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('input')">📋 월별 입력</button>
+  <button class="tab-btn" onclick="switchTab('annual')">📊 연간 현황</button>
+</div>
+
+<div class="container">
+
+<!-- ══════════════ TAB 1: 월별 입력 ══════════════ -->
+<div class="tab-panel active" id="tab-input">
+
+  <div class="page-header">
+    <div>
+      <h1>📋 월 가계부</h1>
+      <small>매달 25일 기준으로 정리하세요</small>
+    </div>
+    <div class="month-selector">
+      <input type="number" id="sel-year" value="2026" min="2020" max="2040" style="width:80px">
+      <span style="color:#fff;font-weight:700">년</span>
+      <select id="sel-month">
+        <option value="1" selected>1</option><option value="2">2</option>
+        <option value="3">3</option><option value="4">4</option>
+        <option value="5">5</option><option value="6">6</option>
+        <option value="7">7</option><option value="8">8</option>
+        <option value="9">9</option><option value="10">10</option>
+        <option value="11">11</option><option value="12">12</option>
+      </select>
+      <span style="color:#fff;font-weight:700">월</span>
+    </div>
+  </div>
+
+  <!-- 수입 -->
+  <div class="section">
+    <div class="section-title">💰 수입</div>
+    <div class="income-row">
+      <div class="income-item">
+        <label>기본 월급 (원)</label>
+        <input type="number" id="income-base" placeholder="0" oninput="calc()">
+      </div>
+      <div class="income-item">
+        <label>기타 수입 (원)</label>
+        <input type="number" id="income-extra" placeholder="0" oninput="calc()">
+      </div>
+    </div>
+    <div class="subtotal-row">
+      <span>총 수입</span>
+      <strong id="total-income">0원</strong>
+    </div>
+    <!-- 앱테크 수익: 참고용, 합계 미포함 -->
+    <div style="margin-top:10px; background:var(--yellow-pale); border:1.5px dashed #F6C90E; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <span style="font-size:12px; font-weight:700; color:#B7791F; white-space:nowrap;">📱 지난달 앱테크 수익</span>
+      <span style="font-size:11px; color:#92681A; flex:1; min-width:120px;">합계에 포함되지 않는 참고용 항목입니다</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="number" id="income-apptech" placeholder="0"
+          style="width:140px; text-align:right; border:1.5px solid #F6C90E; background:#FFFDE7; border-radius:8px; padding:6px 10px; font:13px '맑은 고딕',sans-serif; color:#92400E;">
+        <span style="font-size:12px; color:#92681A; font-weight:600;">원</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 고정지출 -->
+  <div class="section">
+    <div class="section-title">🔒 고정지출</div>
+    <div class="input-grid">
+      <div class="col-hdr">카테고리</div>
+      <div class="col-hdr">항목</div>
+      <div class="col-hdr">금액 (원)</div>
+      <div class="col-hdr">결제일</div>
+      <div class="col-hdr">결제수단</div>
+
+      <!-- 보험 -->
+      <div class="cat">보험</div><div class="label">프리드 생명</div>
+      <input type="number" class="fixed-amt" id="f1" value="70000" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="케이뱅크">
+
+      <div class="cat">보험</div><div class="label">현대해상 실비</div>
+      <input type="number" class="fixed-amt" id="f2" value="21680" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="하나">
+
+      <div class="cat">보험</div><div class="label">현대해상 (추가)</div>
+      <input type="number" class="fixed-amt" id="f3" value="19560" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="하나">
+
+      <div class="cat">보험</div><div class="label">동부 운전자보험</div>
+      <input type="number" class="fixed-amt" id="f4" value="20780" oninput="calc()">
+      <input type="text" class="date-in" value="1일">
+      <input type="text" class="bank-in" value="우리카드">
+
+      <div class="cat">보험</div><div class="label">동부보험 남편</div>
+      <input type="number" class="fixed-amt" id="f5" value="114730" oninput="calc()">
+      <input type="text" class="date-in" value="1일">
+      <input type="text" class="bank-in" value="우리카드">
+
+      <div class="cat">보험</div><div class="label">동부보험 본인</div>
+      <input type="number" class="fixed-amt" id="f6" value="94260" oninput="calc()">
+      <input type="text" class="date-in" value="1일">
+      <input type="text" class="bank-in" value="우리카드">
+
+      <div class="cat">보험</div><div class="label">동양생명 남편</div>
+      <input type="number" class="fixed-amt" id="f7" value="80613" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="우리카드">
+
+      <div class="cat">보험</div><div class="label">동양생명 본인</div>
+      <input type="number" class="fixed-amt" id="f8" value="57750" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="우리카드">
+
+      <!-- 정기구독 -->
+      <div class="cat">정기구독</div><div class="label">쿠팡 와우</div>
+      <input type="number" class="fixed-amt" id="f9" value="7890" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="케이뱅크">
+
+      <div class="cat">정기구독</div><div class="label">아이클라우드</div>
+      <input type="number" class="fixed-amt" id="f10" value="3300" oninput="calc()">
+      <input type="text" class="date-in" value="8일">
+      <input type="text" class="bank-in" value="케이뱅크">
+
+      <div class="cat">정기구독</div><div class="label">정수기</div>
+      <input type="number" class="fixed-amt" id="f11" value="19500" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="케이뱅크">
+
+      <div class="cat">정기구독</div><div class="label">유튜브</div>
+      <input type="number" class="fixed-amt" id="f13" value="12636" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="케이뱅크">
+
+      <!-- 통신 -->
+      <div class="cat">통신</div><div class="label">집전화</div>
+      <input type="number" class="fixed-amt" id="f15" value="37280" oninput="calc()">
+      <input type="text" class="date-in" value="15일">
+      <input type="text" class="bank-in" value="우리카드">
+
+      <div class="cat">통신</div><div class="label">본인 핸드폰</div>
+      <input type="number" class="fixed-amt" id="f16" value="19619" oninput="calc()">
+      <input type="text" class="date-in" value="25일">
+      <input type="text" class="bank-in" value="우리카드">
+
+      <!-- 기타 -->
+      <div class="cat">기타</div><div class="label">엄마 용돈</div>
+      <input type="number" class="fixed-amt" id="f17" value="100000" oninput="calc()">
+      <input type="text" class="date-in" value="-">
+      <input type="text" class="bank-in" value="">
+    </div>
+
+    <div class="subtotal-row" style="margin-top:10px">
+      <span>고정지출 합계</span>
+      <strong id="total-fixed">0원</strong>
+    </div>
+  </div>
+
+  <!-- 비고정지출 -->
+  <div class="section">
+    <div class="section-title mid">📦 비고정지출</div>
+    <div class="input-grid">
+      <div class="col-hdr">카테고리</div>
+      <div class="col-hdr">항목</div>
+      <div class="col-hdr">금액 (원)</div>
+      <div class="col-hdr">비고</div>
+      <div class="col-hdr"></div>
+
+      <div class="cat">관리비</div><div class="label">관리비</div>
+      <input type="number" class="var-amt" id="v1" placeholder="0" oninput="calc()">
+      <input type="text" class="date-in" id="v1-memo" placeholder="메모">
+      <div></div>
+
+      <div class="cat">생활비</div><div class="label">식비</div>
+      <input type="number" class="var-amt" id="v2" value="800000" oninput="calc()">
+      <input type="text" class="date-in" id="v2-memo" placeholder="주수">
+      <div></div>
+
+      <div class="cat">생활비</div><div class="label">생활용품</div>
+      <input type="number" class="var-amt" id="v3" value="200000" oninput="calc()">
+      <input type="text" class="date-in" id="v3-memo" placeholder="메모">
+      <div></div>
+
+      <div class="cat">생활비</div><div class="label">용돈</div>
+      <input type="number" class="var-amt" id="v4" value="300000" oninput="calc()">
+      <input type="text" class="date-in" id="v4-memo" placeholder="메모">
+      <div></div>
+
+      <div class="cat">생활비</div><div class="label">교통비</div>
+      <input type="number" class="var-amt" id="v5" value="150000" oninput="calc()">
+      <input type="text" class="date-in" id="v5-memo" placeholder="메모">
+      <div></div>
+    </div>
+    <div class="subtotal-row mid" style="margin-top:10px">
+      <span>비고정지출 합계</span>
+      <strong id="total-var">0원</strong>
+    </div>
+  </div>
+
+  <!-- 월별 요약 -->
+  <div class="section">
+    <div class="section-title" style="background:#40916C">📊 월별 요약</div>
+    <div class="summary-grid">
+      <div class="summary-card sc-income">
+        <div class="s-label">💰 총 수입</div>
+        <div class="s-value" id="sum-income">0원</div>
+      </div>
+      <div class="summary-card sc-expense">
+        <div class="s-label">📉 지출 합계</div>
+        <div class="s-value" id="sum-expense">0원</div>
+      </div>
+      <div class="summary-card sc-balance" id="card-balance">
+        <div class="s-label">✅ 잔액</div>
+        <div class="s-value" id="sum-balance">0원</div>
+        <div id="compare-badge" class="compare-badge same">전월 대비 -</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 25일 이체 할일 -->
+  <div class="section">
+    <div class="section-title coral">📌 25일 이체 할일</div>
+    <div class="task-grid">
+      <div class="t-hdr">계좌</div>
+      <div class="t-hdr">이체 금액 (원)</div>
+      <div class="t-hdr">메모</div>
+
+      <div class="t-label">하나은행 (잔액 유지)</div>
+      <input type="number" class="task-amt" id="t1" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="ex) 프리드·실비·엄마용돈">
+
+      <div class="t-label">케이뱅크 이체</div>
+      <input type="number" class="task-amt" id="t2" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="메모">
+
+      <div class="t-label">연금저축 1 (64054698-22)</div>
+      <input type="number" class="task-amt" id="t3" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="메모">
+
+      <div class="t-label">연금저축 2 (64751554-22)</div>
+      <input type="number" class="task-amt" id="t4" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="메모">
+
+      <div class="t-label">ISA (64044658-01)</div>
+      <input type="number" class="task-amt" id="t5" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="메모">
+
+      <div class="t-label">위탁계좌 (64104428-01)</div>
+      <input type="number" class="task-amt" id="t6" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="메모">
+
+      <div class="t-label">IRP</div>
+      <input type="number" class="task-amt" id="t7" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="메모">
+
+      <div class="t-label">삼성 일반계좌</div>
+      <input type="number" class="task-amt" id="t8" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="메모">
+
+      <div class="t-label">우리은행 (비상금)</div>
+      <input type="number" class="task-amt" id="t9" placeholder="0" oninput="calcTask()">
+      <input type="text" class="t-memo" placeholder="잔액 전부">
+    </div>
+    <div class="task-total">
+      <span>이체 합계</span>
+      <strong id="task-total">0원</strong>
+    </div>
+  </div>
+
+  <!-- 메모 -->
+  <div class="section">
+    <div class="section-title" style="background:#718096">📝 메모 / 특이사항</div>
+    <textarea id="memo-text" placeholder="이번 달 특이사항, 남편 이체 내역, 기타 메모 등을 자유롭게 적어주세요."></textarea>
+  </div>
+
+  <!-- 버튼 -->
+  <div class="btn-row">
+    <button class="btn btn-save" onclick="saveData()">💾 이번 달 저장</button>
+    <button class="btn btn-clear" onclick="clearForm()">🗑 초기화</button>
+    <button class="btn btn-print" onclick="window.print()">🖨 인쇄</button>
+  </div>
+
+</div><!-- /tab-input -->
+
+
+<!-- ══════════════ TAB 2: 연간현황 ══════════════ -->
+<div class="tab-panel" id="tab-annual">
+  <div class="page-header">
+    <div>
+      <h1>📊 2026년 연간 현황</h1>
+      <small>저장된 월별 데이터 자동 집계</small>
+    </div>
+  </div>
+  <div class="section">
+    <div style="overflow-x:auto">
+    <table class="annual-table" id="annual-table">
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>1월</th><th>2월</th><th>3월</th><th>4월</th>
+          <th>5월</th><th>6월</th><th>7월</th><th>8월</th>
+          <th>9월</th><th>10월</th><th>11월</th><th>12월</th>
+          <th>합계</th>
+        </tr>
+      </thead>
+      <tbody id="annual-body"></tbody>
+    </table>
+    </div>
+
+    <div style="margin-top:20px">
+      <div class="section-title" style="background:#40916C">📈 전월 대비 비고정지출 증감</div>
+      <div style="overflow-x:auto">
+      <table class="annual-table" id="compare-table">
+        <thead>
+          <tr>
+            <th>항목</th>
+            <th>1→2월</th><th>2→3월</th><th>3→4월</th><th>4→5월</th>
+            <th>5→6월</th><th>6→7월</th><th>7→8월</th><th>8→9월</th>
+            <th>9→10월</th><th>10→11월</th><th>11→12월</th>
+          </tr>
+        </thead>
+        <tbody id="compare-body"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div><!-- /tab-annual -->
+
+</div><!-- /container -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 유틸 ──────────────────────────────────────────────
+const fmt = n => Number(n||0).toLocaleString('ko-KR') + '원';
+const num = id => Number(document.getElementById(id)?.value || 0);
+
+// ── 계산 ──────────────────────────────────────────────
+function calc() {
+  const income  = num('income-base') + num('income-extra');
+  const fixed   = [...document.querySelectorAll('.fixed-amt')].reduce((a,e)=>a+Number(e.value||0),0);
+  const variable= [...document.querySelectorAll('.var-amt')].reduce((a,e)=>a+Number(e.value||0),0);
+  const expense = fixed + variable;
+  const balance = income - expense;
+
+  document.getElementById('total-income').textContent  = fmt(income);
+  document.getElementById('total-fixed').textContent   = fmt(fixed);
+  document.getElementById('total-var').textContent     = fmt(variable);
+  document.getElementById('sum-income').textContent    = fmt(income);
+  document.getElementById('sum-expense').textContent   = fmt(expense);
+  document.getElementById('sum-balance').textContent   = fmt(balance);
+
+  const card = document.getElementById('card-balance');
+  card.className = 'summary-card sc-balance' + (balance < 0 ? ' negative' : '');
+
+  // 전월 대비
+  const key = prevKey();
+  const prev = key ? JSON.parse(localStorage.getItem(key)||'{}') : null;
+  const badge = document.getElementById('compare-badge');
+  if (prev && prev.expense !== undefined) {
+    const diff = expense - prev.expense;
+    if (diff > 0) {
+      badge.textContent = `전월 대비 지출 +${Number(diff).toLocaleString()}원 ↑`;
+      badge.className = 'compare-badge up';
+    } else if (diff < 0) {
+      badge.textContent = `전월 대비 지출 ${Number(diff).toLocaleString()}원 ↓`;
+      badge.className = 'compare-badge down';
+    } else {
+      badge.textContent = '전월과 지출 동일';
+      badge.className = 'compare-badge same';
+    }
+  } else {
+    badge.textContent = '전월 데이터 없음';
+    badge.className = 'compare-badge same';
+  }
+}
+
+function calcTask() {
+  const total = [...document.querySelectorAll('.task-amt')].reduce((a,e)=>a+Number(e.value||0),0);
+  document.getElementById('task-total').textContent = fmt(total);
+}
+
+// ── 저장 키 ──────────────────────────────────────────
+function currKey() {
+  const y = document.getElementById('sel-year').value;
+  const m = document.getElementById('sel-month').value;
+  return `budget_${y}_${m.padStart(2,'0')}`;
+}
+function prevKey() {
+  const y = parseInt(document.getElementById('sel-year').value);
+  const m = parseInt(document.getElementById('sel-month').value);
+  if (m === 1) return `budget_${y-1}_12`;
+  return `budget_${y}_${String(m-1).padStart(2,'0')}`;
+}
+
+// ── 저장 / 불러오기 ──────────────────────────────────
+function saveData() {
+  const income  = num('income-base') + num('income-extra');
+  const fixed   = [...document.querySelectorAll('.fixed-amt')].reduce((a,e)=>a+Number(e.value||0),0);
+  const variable= [...document.querySelectorAll('.var-amt')].reduce((a,e)=>a+Number(e.value||0),0);
+  const expense = fixed + variable;
+
+  const data = {
+    year: document.getElementById('sel-year').value,
+    month: document.getElementById('sel-month').value,
+    incomeBase: num('income-base'),
+    incomeExtra: num('income-extra'),
+    apptechIncome: num('income-apptech'),
+    income, fixed, variable, expense,
+    balance: income - expense,
+    memo: document.getElementById('memo-text').value,
+    fixedItems: [...document.querySelectorAll('.fixed-amt')].map(e=>Number(e.value||0)),
+    varItems: [...document.querySelectorAll('.var-amt')].map(e=>Number(e.value||0)),
+    taskItems: [...document.querySelectorAll('.task-amt')].map(e=>Number(e.value||0)),
+    savedAt: new Date().toLocaleString('ko-KR')
+  };
+  localStorage.setItem(currKey(), JSON.stringify(data));
+  showToast('💾 저장 완료!');
+  renderAnnual();
+}
+
+function loadData(key) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return;
+  const d = JSON.parse(raw);
+  document.getElementById('income-base').value  = d.incomeBase  || '';
+  document.getElementById('income-extra').value = d.incomeExtra || '';
+  document.getElementById('income-apptech').value = d.apptechIncome || '';
+  document.getElementById('memo-text').value    = d.memo || '';
+
+  const fixEls = [...document.querySelectorAll('.fixed-amt')];
+  const varEls = [...document.querySelectorAll('.var-amt')];
+  const taskEls= [...document.querySelectorAll('.task-amt')];
+  if (d.fixedItems) d.fixedItems.forEach((v,i)=>{ if(fixEls[i]) fixEls[i].value = v; });
+  if (d.varItems)   d.varItems.forEach((v,i)=>{ if(varEls[i]) varEls[i].value = v; });
+  if (d.taskItems)  d.taskItems.forEach((v,i)=>{ if(taskEls[i]) taskEls[i].value = v; });
+  calc(); calcTask();
+}
+
+function clearForm() {
+  if (!confirm('이번 달 입력 내용을 초기화할까요?')) return;
+  document.getElementById('income-base').value = '';
+  document.getElementById('income-extra').value = '';
+  document.getElementById('income-apptech').value = '';
+  document.getElementById('memo-text').value = '';
+  document.querySelectorAll('.var-amt, .task-amt').forEach(e => e.value = '');
+  // 고정지출 기본값 복원
+  const defaults = [70000,21680,19560,20780,114730,94260,80613,57750,
+                    7890,3300,19500,12636,37280,19619,100000];
+  document.querySelectorAll('.fixed-amt').forEach((e,i)=>{ e.value = defaults[i]||0; });
+  calc(); calcTask();
+}
+
+// ── 탭 전환 ──────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (tab === 'annual') renderAnnual();
+}
+
+// ── 연간현황 렌더링 ──────────────────────────────────
+function renderAnnual() {
+  const year = document.getElementById('sel-year').value;
+  const rows = ['income','fixed','variable','expense','balance'];
+  const labels = { income:'💰 총 수입', fixed:'🔒 고정지출', variable:'📦 비고정지출',
+                   expense:'📉 지출 합계', balance:'✅ 잔액' };
+  const monthData = Array.from({length:12}, (_,i) => {
+    const key = `budget_${year}_${String(i+1).padStart(2,'0')}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  });
+
+  const tbody = document.getElementById('annual-body');
+  tbody.innerHTML = '';
+  rows.forEach(field => {
+    const tr = document.createElement('tr');
+    if (field === 'balance') tr.className = 'balance-row';
+    let rowTotal = 0;
+    let td = document.createElement('td');
+    td.className = 'row-label'; td.textContent = labels[field];
+    tr.appendChild(td);
+
+    monthData.forEach(d => {
+      const td2 = document.createElement('td');
+      const v = d ? (d[field] || 0) : null;
+      if (v !== null) {
+        rowTotal += v;
+        td2.textContent = Number(v).toLocaleString();
+        if (field === 'balance' && v < 0) td2.className = 'negative';
+      } else {
+        td2.textContent = '-';
+        td2.style.color = '#ccc';
+      }
+      tr.appendChild(td2);
+    });
+
+    const tdTotal = document.createElement('td');
+    tdTotal.className = 'total-col';
+    tdTotal.textContent = rowTotal > 0 ? Number(rowTotal).toLocaleString() : '-';
+    tr.appendChild(tdTotal);
+    tbody.appendChild(tr);
+  });
+
+  // 전월 대비
+  const cbody = document.getElementById('compare-body');
+  cbody.innerHTML = '';
+  const tr2 = document.createElement('tr');
+  let td0 = document.createElement('td');
+  td0.className = 'row-label'; td0.textContent = '비고정지출 증감';
+  tr2.appendChild(td0);
+  for (let i=1; i<12; i++) {
+    const td3 = document.createElement('td');
+    const cur  = monthData[i]?.variable || null;
+    const prev = monthData[i-1]?.variable || null;
+    if (cur !== null && prev !== null) {
+      const diff = cur - prev;
+      td3.textContent = (diff >= 0 ? '+' : '') + Number(diff).toLocaleString();
+      td3.style.color = diff > 0 ? '#E53E3E' : diff < 0 ? '#2D6A4F' : '#888';
+      td3.style.fontWeight = '700';
+    } else { td3.textContent = '-'; td3.style.color = '#ccc'; }
+    tr2.appendChild(td3);
+  }
+  cbody.appendChild(tr2);
+}
+
+// ── 토스트 ──────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── 월 변경 시 저장 데이터 불러오기 ─────────────────
+document.getElementById('sel-month').addEventListener('change', () => {
+  loadData(currKey());
+});
+
+// ── 초기 계산 ────────────────────────────────────────
+window.addEventListener('load', () => {
+  loadData(currKey());
+  calc(); calcTask();
+});
+</script>
+</body>
+</html>
